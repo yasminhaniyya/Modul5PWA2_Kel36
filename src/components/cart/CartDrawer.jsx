@@ -5,7 +5,7 @@ import userService from '../../services/userService'
 
 export default function CartDrawer({ open, onClose }) {
   const [cart, setCart] = useState(() => cartService.getCart())
-  const [phone, setPhone] = useState(() => localStorage.getItem('wa_checkout_phone') || '6281234567890')
+  const [phone, setPhone] = useState(() => localStorage.getItem('wa_checkout_phone') || '082329191645')
   const [customerName, setCustomerName] = useState(() => {
     const prof = userService.getUserProfile()
     return prof?.username || ''
@@ -132,14 +132,14 @@ export default function CartDrawer({ open, onClose }) {
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
               <label style={{ fontSize: '0.8rem', color: 'var(--steel)' }}>
-                Target WhatsApp Number (Contoh: 6281234567890):
+                Target WhatsApp Number:
                 <input
                   type="text"
                   className="form-input"
                   style={{ marginTop: '4px', padding: '6px 10px', fontSize: '0.88rem' }}
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
-                  placeholder="6281234567890"
+                  placeholder="082329191645"
                 />
               </label>
 

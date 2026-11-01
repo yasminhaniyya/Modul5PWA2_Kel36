@@ -7,7 +7,7 @@ export default function EditProfilePage({ onBack, onSaved }) {
   const [username, setUsername] = useState(profile.username || 'Shooter')
   const [bio, setBio] = useState(profile.bio || '')
   const [avatar, setAvatar] = useState(profile.avatar || null)
-  const [phone, setPhone] = useState(() => localStorage.getItem('wa_checkout_phone') || '6281234567890')
+  const [phone, setPhone] = useState(() => localStorage.getItem('wa_checkout_phone') || '082329191645')
   const [feedback, setFeedback] = useState('')
 
   const handleAvatarChange = (e) => {
@@ -123,7 +123,7 @@ export default function EditProfilePage({ onBack, onSaved }) {
             type="text"
             value={phone}
             onChange={(e) => setPhone(e.target.value)}
-            placeholder="e.g. 6281234567890"
+            placeholder="e.g. 082329191645"
             className="form-input"
           />
         </div>

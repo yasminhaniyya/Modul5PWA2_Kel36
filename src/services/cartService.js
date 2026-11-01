@@ -77,11 +77,17 @@ class CartService {
     return cart.reduce((count, item) => count + item.quantity, 0)
   }
 
-  generateWhatsAppUrl(phoneNumber = '6281234567890', customerName = '') {
+  generateWhatsAppUrl(phoneNumber = '082329191645', customerName = '') {
     const cart = this.getCart()
     if (cart.length === 0) return ''
 
-    const cleanPhone = String(phoneNumber).replace(/[^0-9]/g, '')
+    let cleanPhone = String(phoneNumber).replace(/[^0-9]/g, '')
+    if (cleanPhone.startsWith('0')) {
+      cleanPhone = '62' + cleanPhone.slice(1)
+    } else if (!cleanPhone.startsWith('62')) {
+      cleanPhone = '62' + cleanPhone
+    }
+
     const total = this.getCartTotal()
 
     const itemLines = cart
