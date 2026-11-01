@@ -1,4 +1,5 @@
 import { apiClient, IS_SUPABASE } from '../config/api'
+import queryCache from '../utils/queryCache'
 
 // ---------------------------------------------------------------------------
 // Normalizer — standardizes product shape whether received from Supabase
@@ -45,6 +46,16 @@ export const normalizeProduct = (item) => {
     ? '/guns/shotgun.svg'
     : '/guns/pistol.svg'
 
+  const primaryRaw = item.image_url || item.image || defaultFallback
+  let imagesArray = []
+  if (Array.isArray(item.images) && item.images.length > 0) {
+    imagesArray = item.images
+  } else if (typeof primaryRaw === 'string' && primaryRaw.includes(',')) {
+    imagesArray = primaryRaw.split(',').map((s) => s.trim()).filter(Boolean)
+  } else {
+    imagesArray = [primaryRaw]
+  }
+
   return {
     ...item,
     id: item.id,
@@ -54,8 +65,9 @@ export const normalizeProduct = (item) => {
     caliber: item.caliber || 'Standard',
     price: Number(item.price ?? item.cook_time ?? 0),
     description: item.description || '',
-    image_url: item.image_url || item.image || defaultFallback,
-    image: item.image_url || item.image || defaultFallback,
+    image_url: imagesArray[0] || defaultFallback,
+    image: imagesArray[0] || defaultFallback,
+    images: imagesArray,
     ingredients: specsList,
     steps: stepsList,
   }
@@ -153,10 +165,13 @@ class GunService {
       const res = await apiClient.post('/rest/v1/products', payload, {
         headers: { Prefer: 'return=representation' },
       })
+      queryCache.invalidate('guns_')
       const created = Array.isArray(res) ? res[0] : res
       return { success: true, data: normalizeProduct(created) }
     }
-    return apiClient.post('/api/v1/recipes', data)
+    const res = await apiClient.post('/api/v1/recipes', data)
+    queryCache.invalidate('guns_')
+    return res
   }
 
   /**
@@ -186,10 +201,15 @@ class GunService {
       const res = await apiClient.patch(`/rest/v1/products?id=eq.${id}`, payload, {
         headers: { Prefer: 'return=representation' },
       })
+      queryCache.invalidate('guns_')
+      queryCache.invalidate(`gun_detail_${id}`)
       const updated = Array.isArray(res) ? res[0] : res
       return { success: true, data: normalizeProduct(updated) }
     }
-    return apiClient.put(`/api/v1/recipes/${id}`, data)
+    const res = await apiClient.put(`/api/v1/recipes/${id}`, data)
+    queryCache.invalidate('guns_')
+    queryCache.invalidate(`gun_detail_${id}`)
+    return res
   }
 
   /**
@@ -199,13 +219,18 @@ class GunService {
     if (IS_SUPABASE) {
       return this.updateGun(id, data)
     }
-    return apiClient.patch(`/api/v1/recipes/${id}`, data)
+    const res = await apiClient.patch(`/api/v1/recipes/${id}`, data)
+    queryCache.invalidate('guns_')
+    queryCache.invalidate(`gun_detail_${id}`)
+    return res
   }
 
   /**
    * Delete product.
    */
   async deleteGun(id) {
+    queryCache.invalidate('guns_')
+    queryCache.invalidate(`gun_detail_${id}`)
     if (IS_SUPABASE) {
       await apiClient.delete(`/rest/v1/products?id=eq.${id}`)
       return { success: true }

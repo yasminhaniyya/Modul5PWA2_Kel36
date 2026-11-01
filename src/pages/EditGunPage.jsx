@@ -46,6 +46,7 @@ export default function EditGunPage({ gun, gunId, onBack, onSuccess }) {
   })
 
   const [currentImageUrl, setCurrentImageUrl] = useState('')
+  const [extraImages, setExtraImages] = useState('')
   const [imageFile, setImageFile] = useState(null)
   const [imagePreview, setImagePreview] = useState(null)
   const [uploading, setUploading] = useState(false)
@@ -88,7 +89,16 @@ export default function EditGunPage({ gun, gunId, onBack, onSuccess }) {
             servings: data.servings || 1,
             is_featured: Boolean(data.is_featured),
           })
-          setCurrentImageUrl(data.image_url || data.image || '/guns/pistol.svg')
+          if (data.image_url && data.image_url.includes(',')) {
+            const parts = data.image_url.split(',').map((s) => s.trim())
+            setCurrentImageUrl(parts[0])
+            setExtraImages(parts.slice(1).join(', '))
+          } else if (Array.isArray(data.images) && data.images.length > 1) {
+            setCurrentImageUrl(data.images[0])
+            setExtraImages(data.images.slice(1).join(', '))
+          } else {
+            setCurrentImageUrl(data.image_url || data.image || '/guns/pistol.svg')
+          }
 
           if (data.ingredients && data.ingredients.length > 0) {
             setSpecs(data.ingredients.map((ing) => ({
@@ -265,6 +275,9 @@ export default function EditGunPage({ gun, gunId, onBack, onSuccess }) {
       return
     }
 
+    const allImgList = [imagePreview || currentImageUrl || '/guns/pistol.svg', ...extraImages.split(',').map((s) => s.trim()).filter(Boolean)]
+    const finalImageUrl = allImgList.join(',')
+
     const payload = {
       name: formData.name.trim(),
       type: formData.type || (formData.category === 'minuman' ? 'Rifle' : 'Pistol'),
@@ -272,7 +285,7 @@ export default function EditGunPage({ gun, gunId, onBack, onSuccess }) {
       price: Number(formData.price) || 500,
       category: formData.category || 'makanan',
       description: formData.description.trim() || `${formData.type} caliber ${formData.caliber}.`,
-      image_url: imagePreview || currentImageUrl || '/guns/pistol.svg',
+      image_url: finalImageUrl,
       prep_time: 15,
       cook_time: Number(formData.price) || 500,
       servings: Number(formData.servings) || 1,
@@ -492,6 +505,23 @@ export default function EditGunPage({ gun, gunId, onBack, onSuccess }) {
             rows={3}
             className="form-textarea"
           />
+        </div>
+
+        <div className="form-group">
+          <label htmlFor="edit-extraImages" className="form-label">
+            Additional Images (Multi-Image Support, comma-separated URLs)
+          </label>
+          <input
+            id="edit-extraImages"
+            type="text"
+            value={extraImages}
+            onChange={(e) => setExtraImages(e.target.value)}
+            placeholder="https://example.com/side-view.jpg, https://example.com/optic.jpg"
+            className="form-input"
+          />
+          <span className="form-hint" style={{ fontSize: '0.8rem', color: 'var(--steel)' }}>
+            Add more views and angles to create a multi-image gallery for this product.
+          </span>
         </div>
 
         {/* Specs */}

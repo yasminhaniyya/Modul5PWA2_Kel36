@@ -44,6 +44,7 @@ export default function CreateGunPage({ onBack, onSuccess }) {
   const [imageFile, setImageFile] = useState(null)
   const [imagePreview, setImagePreview] = useState(null)
   const [uploadedImageUrl, setUploadedImageUrl] = useState('')
+  const [extraImages, setExtraImages] = useState('')
 
   // Specifications (ingredients in API)
   const [specs, setSpecs] = useState([
@@ -256,12 +257,15 @@ export default function CreateGunPage({ onBack, onSuccess }) {
       return
     }
 
+    const allImgList = [uploadedImageUrl || '/guns/pistol.svg', ...extraImages.split(',').map((s) => s.trim()).filter(Boolean)]
+    const finalImageUrl = allImgList.join(',')
+
     // Prepare payload compliant with backend /api/v1/recipes schema
     const payload = {
       name: formData.name.trim(),
       category: formData.category || 'makanan',
       description: formData.description.trim() || `${formData.type} caliber ${formData.caliber}.`,
-      image_url: uploadedImageUrl || '/guns/pistol.svg',
+      image_url: finalImageUrl,
       prep_time: 15,
       cook_time: Number(formData.price) || 500, // Price stored in cook_time
       servings: Number(formData.servings) || 1,
@@ -572,6 +576,23 @@ export default function CreateGunPage({ onBack, onSuccess }) {
               rows={3}
               className="form-textarea"
             />
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="extraImages" className="form-label">
+              Additional Images (Multi-Image Support, comma-separated URLs)
+            </label>
+            <input
+              id="extraImages"
+              type="text"
+              value={extraImages}
+              onChange={(e) => setExtraImages(e.target.value)}
+              placeholder="https://example.com/side-view.jpg, https://example.com/optic.jpg"
+              className="form-input"
+            />
+            <span className="form-hint" style={{ fontSize: '0.8rem', color: 'var(--steel)' }}>
+              Add more views and angles to create a multi-image gallery for this product.
+            </span>
           </div>
 
           {/* Specifications (Ingredients) */}

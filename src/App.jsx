@@ -1,16 +1,15 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Header from './components/Header.jsx'
 import Footer from './components/Footer.jsx'
 import Catalog from './pages/Catalog.jsx'
 import FavoritesPage from './pages/FavoritesPage.jsx'
 import ProfilePage from './pages/ProfilePage.jsx'
+import EditProfilePage from './pages/EditProfilePage.jsx'
 import CreateGunPage from './pages/CreateGunPage.jsx'
 import EditGunPage from './pages/EditGunPage.jsx'
 import GunDetail from './components/gun/GunDetail.jsx'
-import About from './pages/About.jsx'
-import Contact from './pages/Contact.jsx'
+import CartDrawer from './components/cart/CartDrawer.jsx'
 import PWABadge from './components/PWABadge.jsx'
-import ConfirmModal from './components/modals/ConfirmModal.jsx'
 import SplashScreen from './components/common/SplashScreen.jsx'
 import gunService from './services/gunService.js'
 import './App.css'
@@ -18,11 +17,30 @@ import './App.css'
 function App() {
   const [showSplash, setShowSplash] = useState(true)
   const [tab, setTab] = useState('Catalog')
-  const [mode, setMode] = useState('list') // 'list' | 'create' | 'edit' | 'detail'
+  const [mode, setMode] = useState('list') // 'list' | 'create' | 'edit' | 'detail' | 'edit-profile'
   const [selectedGun, setSelectedGun] = useState(null)
   const [editingGun, setEditingGun] = useState(null)
-  const [deleteTarget, setDeleteTarget] = useState(null)
-  const [deleting, setDeleting] = useState(false)
+  const [isCartOpen, setIsCartOpen] = useState(false)
+
+  // Handle unique share link on page load (?gun=<idOrName>)
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    const gunParam = params.get('gun')
+    if (gunParam) {
+      const loadSharedGun = async () => {
+        try {
+          const res = await gunService.getGunById(gunParam)
+          if (res.success && res.data) {
+            setSelectedGun(res.data)
+            setMode('detail')
+          }
+        } catch (e) {
+          console.warn('Could not load shared gun:', e)
+        }
+      }
+      loadSharedGun()
+    }
+  }, [])
 
   // Unified navigation handler
   const handleNavigate = (target, payload) => {
@@ -36,6 +54,9 @@ function App() {
     } else if (target === 'Detail') {
       setSelectedGun(payload)
       setMode('detail')
+      window.scrollTo({ top: 0, behavior: 'smooth' })
+    } else if (target === 'EditProfile') {
+      setMode('edit-profile')
       window.scrollTo({ top: 0, behavior: 'smooth' })
     } else {
       // Tab change
@@ -63,6 +84,7 @@ function App() {
         tab={mode === 'list' ? tab : ''}
         onTab={(newTab) => handleNavigate(newTab)}
         onNavigateCreate={() => handleNavigate('Create')}
+        onOpenCart={() => setIsCartOpen(true)}
       />
 
       <main className="main">
@@ -89,12 +111,25 @@ function App() {
           />
         )}
 
+        {mode === 'edit-profile' && (
+          <EditProfilePage
+            onBack={handleBackToList}
+            onSaved={() => {
+              handleBackToList()
+              setTab('Profile')
+            }}
+          />
+        )}
+
         {mode === 'detail' && selectedGun && (
           <GunDetail
             gun={selectedGun}
             onBack={handleBackToList}
             onEdit={(g) => handleNavigate('Edit', g)}
-            onDelete={(g) => setDeleteTarget(g)}
+            onDelete={() => {
+              handleBackToList()
+              setTab('Catalog')
+            }}
           />
         )}
 
@@ -113,37 +148,26 @@ function App() {
               />
             )}
             {tab === 'Profile' && (
-              <ProfilePage onReplaySplash={() => setShowSplash(true)} />
+              <ProfilePage
+                onReplaySplash={() => setShowSplash(true)}
+                onEditProfile={() => handleNavigate('EditProfile')}
+                onOpenDraft={(draftId) => {
+                  if (draftId === 'create') {
+                    handleNavigate('Create')
+                  } else {
+                    handleNavigate('Edit', { id: draftId })
+                  }
+                }}
+              />
             )}
-            {tab === 'About' && <About />}
-            {tab === 'Contact' && <Contact />}
           </>
         )}
       </main>
 
-      {/* Global Delete Confirmation */}
-      <ConfirmModal
-        open={Boolean(deleteTarget)}
-        title="Delete Hardware Record"
-        message={`Are you sure you want to delete "${deleteTarget?.name}"? This action cannot be undone.`}
-        confirmLabel="Delete"
-        danger
-        loading={deleting}
-        onConfirm={async () => {
-          if (!deleteTarget) return
-          try {
-            setDeleting(true)
-            await gunService.deleteGun(deleteTarget.id)
-            setDeleteTarget(null)
-            handleBackToList()
-            setTab('Catalog')
-          } catch (err) {
-            alert(err.message || 'Failed to delete record.')
-          } finally {
-            setDeleting(false)
-          }
-        }}
-        onCancel={() => setDeleteTarget(null)}
+      {/* Cart Drawer */}
+      <CartDrawer
+        open={isCartOpen}
+        onClose={() => setIsCartOpen(false)}
       />
 
       <PWABadge />
