@@ -66,7 +66,17 @@ export default function GunDetail({ gun, onBack, onEdit, onDelete }) {
 
       {/* Hero */}
       <div className="detail-hero">
-        <img className="detail-img" src={imgSrc} alt={gun.name} />
+        <img
+          className="detail-img"
+          src={imgSrc}
+          alt={gun.name}
+          onError={(e) => {
+            const fallback = category === 'Rifle' ? '/guns/rifle.svg' : category === 'Shotgun' ? '/guns/shotgun.svg' : '/guns/pistol.svg'
+            if (e.currentTarget.src !== fallback && !e.currentTarget.src.endsWith(fallback)) {
+              e.currentTarget.src = fallback
+            }
+          }}
+        />
         <div className="detail-info">
           <h1 className="display">{gun.name}</h1>
           <p className="type">

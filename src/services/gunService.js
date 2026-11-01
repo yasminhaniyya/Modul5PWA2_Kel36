@@ -38,6 +38,13 @@ export const normalizeProduct = (item) => {
       ? item.steps
       : ['Verify firearm is completely unloaded and point in safe direction.', 'Inspect receiver and mechanism for maintenance.']
 
+  const typeStr = (item.type || item.category || '').toLowerCase()
+  const defaultFallback = typeStr.includes('rifle')
+    ? '/guns/rifle.svg'
+    : typeStr.includes('shotgun')
+    ? '/guns/shotgun.svg'
+    : '/guns/pistol.svg'
+
   return {
     ...item,
     id: item.id,
@@ -47,8 +54,8 @@ export const normalizeProduct = (item) => {
     caliber: item.caliber || 'Standard',
     price: Number(item.price ?? item.cook_time ?? 0),
     description: item.description || '',
-    image_url: item.image_url || item.image || '/guns/pistol.svg',
-    image: item.image_url || item.image || '/guns/pistol.svg',
+    image_url: item.image_url || item.image || defaultFallback,
+    image: item.image_url || item.image || defaultFallback,
     ingredients: specsList,
     steps: stepsList,
   }

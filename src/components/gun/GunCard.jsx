@@ -31,6 +31,12 @@ export default function GunCard({ gun, onSelect, onEdit, onDelete }) {
           width="240"
           height="180"
           loading="lazy"
+          onError={(e) => {
+            const fallback = category === 'Rifle' ? '/guns/rifle.svg' : category === 'Shotgun' ? '/guns/shotgun.svg' : '/guns/pistol.svg'
+            if (e.currentTarget.src !== fallback && !e.currentTarget.src.endsWith(fallback)) {
+              e.currentTarget.src = fallback
+            }
+          }}
         />
 
         <span className="name display">{gun.name}</span>
