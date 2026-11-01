@@ -172,25 +172,41 @@ export default function EditGunPage({ gun, gunId, onBack, onSuccess }) {
     }
   }
 
-  // Handle new image file
+  // Handle new image files (Multi-Image)
   const handleImageChange = (e) => {
-    const file = e.target.files[0]
-    if (!file) return
-
-    if (file.size > 5 * 1024 * 1024) {
-      setError('File size exceeds 5MB limit.')
-      return
-    }
+    const files = Array.from(e.target.files || [])
+    if (files.length === 0) return
 
     const allowed = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp']
-    if (!allowed.includes(file.type)) {
-      setError('Allowed formats: .jpg, .jpeg, .png, .webp')
+    const valid = files.filter((f) => allowed.includes(f.type) && f.size <= 5 * 1024 * 1024)
+
+    if (valid.length === 0) {
+      setError('Allowed formats: .jpg, .jpeg, .png, .webp (up to 5MB)')
       return
     }
 
-    setImageFile(file)
-    setImagePreview(URL.createObjectURL(file))
+    setImageFile(valid[0])
+    setImagePreview(URL.createObjectURL(valid[0]))
     setError('')
+
+    if (valid.length > 1) {
+      const extraList = []
+      let readCount = 0
+      valid.slice(1).forEach((file) => {
+        const reader = new FileReader()
+        reader.onload = (event) => {
+          extraList.push(event.target.result)
+          readCount++
+          if (readCount === valid.length - 1) {
+            setExtraImages((prev) => {
+              const prevArr = prev ? prev.split(',').map((s) => s.trim()) : []
+              return [...prevArr, ...extraList].join(',')
+            })
+          }
+        }
+        reader.readAsDataURL(file)
+      })
+    }
   }
 
   const handleUploadNewImage = async () => {
@@ -373,12 +389,13 @@ export default function EditGunPage({ gun, gunId, onBack, onSuccess }) {
               <input
                 id="edit-gun-image"
                 type="file"
+                multiple
                 accept="image/jpeg,image/jpg,image/png,image/webp"
                 onChange={handleImageChange}
                 className="hidden-file-input"
               />
               <label htmlFor="edit-gun-image" className="btn btn--outline btn--sm">
-                <Upload size={14} /> Select New Image File
+                <Upload size={14} /> Select Image File(s) (Bisa &gt; 1)
               </label>
 
               {imageFile && (

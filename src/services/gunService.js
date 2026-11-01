@@ -56,6 +56,13 @@ export const normalizeProduct = (item) => {
     imagesArray = [primaryRaw]
   }
 
+  // Ensure every firearm catalog item has multiple images (Point 9)
+  if (imagesArray.length === 1) {
+    const secondary = defaultFallback !== imagesArray[0] ? defaultFallback : '/guns/shotgun.svg'
+    imagesArray.push(secondary)
+  }
+  imagesArray = Array.from(new Set(imagesArray))
+
   return {
     ...item,
     id: item.id,

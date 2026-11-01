@@ -12,7 +12,14 @@ export default function GunCard({ gun, onSelect, onEdit, onDelete, onShareNotifi
   const [copied, setCopied] = useState(false)
   const [addedToCart, setAddedToCart] = useState(false)
 
-  const imgSrc = gun.image_url || gun.image || '/guns/pistol.svg'
+  const images = Array.isArray(gun.images) && gun.images.length > 0
+    ? gun.images
+    : typeof gun.image_url === 'string' && gun.image_url.includes(',')
+    ? gun.image_url.split(',').map((s) => s.trim()).filter(Boolean)
+    : [gun.image_url || gun.image || '/guns/pistol.svg']
+
+  const [activeImgIdx, setActiveImgIdx] = useState(0)
+  const currentImg = images[activeImgIdx] || images[0]
   const category = gun.type || gun.category || 'Hardware'
   const caliber = gun.caliber || gun.difficulty || ''
   const price = gun.price ?? gun.cook_time ?? 0
@@ -68,14 +75,50 @@ export default function GunCard({ gun, onSelect, onEdit, onDelete, onShareNotifi
         onClick={() => onSelect(gun)}
         aria-label={`View ${gun.name}`}
       >
-        <LazyImage
-          src={imgSrc}
-          alt={gun.name}
-          category={category}
-          width={240}
-          height={180}
-          className="card-img"
-        />
+        <div className="card-img-wrap">
+          <LazyImage
+            src={currentImg}
+            alt={gun.name}
+            category={category}
+            width={240}
+            height={180}
+            className="card-img"
+          />
+
+          {images.length > 1 && (
+            <div className="card-multi-img-controls" onClick={(e) => e.stopPropagation()}>
+              <button
+                type="button"
+                className="card-img-arrow"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  setActiveImgIdx((prev) => (prev > 0 ? prev - 1 : images.length - 1))
+                }}
+                title="Previous image"
+                aria-label="Previous image"
+              >
+                ‹
+              </button>
+
+              <span className="card-img-badge">
+                📷 {activeImgIdx + 1}/{images.length}
+              </span>
+
+              <button
+                type="button"
+                className="card-img-arrow"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  setActiveImgIdx((prev) => (prev < images.length - 1 ? prev + 1 : 0))
+                }}
+                title="Next image"
+                aria-label="Next image"
+              >
+                ›
+              </button>
+            </div>
+          )}
+        </div>
 
         <span className="name display">{gun.name}</span>
 
