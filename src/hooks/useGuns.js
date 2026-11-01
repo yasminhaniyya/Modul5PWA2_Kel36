@@ -29,10 +29,16 @@ export function useGuns(params = {}) {
         setGuns(response.data || [])
         setPagination(response.pagination || null)
       } else {
-        setError(response.message || 'Failed to fetch products.')
+        const msg = typeof response.message === 'string'
+          ? response.message
+          : (response.message?.message || 'Failed to fetch products.')
+        setError(msg)
       }
     } catch (err) {
-      setError(err.message || 'An error occurred while fetching products.')
+      const msg = typeof err?.message === 'string'
+        ? err.message
+        : (err?.message?.message || 'An error occurred while fetching products.')
+      setError(msg)
       setGuns([])
     } finally {
       setLoading(false)
